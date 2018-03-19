@@ -1,3 +1,4 @@
+# -*- conf -*-
 opam-version: "1.2"
 name: "yara"
 version: "0.1"
@@ -13,6 +14,20 @@ build: [
 ]
 depends: [
 	"jbuilder" {build}
-	"ctypes"
+	"ocaml-migrate-parsetree" {build}
+	"ppx_deriving" {>= "4.2.0"}
+	"core" {>= "v0.9.0"}
+	"ctypes" {>= "0.13.0"}
+	"ctypes-foreign"
+]
+depexts: [
+	[["debian"] ["libyara-dev"]]
+	[["alpine"] ["libyara-dev"]]
+	[["ubuntu"] ["libyara-dev"]]
+	[["centos"] ["epel-release" "yara-devel"]]
+	[["fedora"] ["yara-devel"]]
+	[["archlinux"] ["yara"]]
+	[["gentoo"] ["yara"]]
+	[["darwin" "homebrew"] ["yara"]]
 ]
 available: [ocaml-version >= "4.02.3"]

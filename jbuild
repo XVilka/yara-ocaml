@@ -5,5 +5,5 @@
    (wrapped false)
    (preprocess (pps (ppx_deriving.std)))
    (libraries (core ctypes ctypes.foreign))
-   (c_library_flags (:standard -Wl,--no-as-needed -lyara -pthread))
+   (c_library_flags (:standard -lyara))
    ))

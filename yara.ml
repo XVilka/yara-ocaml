@@ -377,8 +377,14 @@ let yara_scan_mem rules buf fn =
                     let rule = {
                         identifier = getf rawrule yrrule_identifier;
                         (* TODO: How to check if NULL before? *)
-                        (*tags = getf rawrule yrrule_tags;*)
-                        tags = "";
+                        tags = getf rawrule yrrule_tags;
+                        (* Convert pointer to a list here *)
+                        (*
+                        metas = getf rawrule yrrule_metas;
+                        strings = getf rawrule yrrule_strings;
+                        ns = getf rawrule yrrule_ns;
+                        *)
+                        (* tags = ""; *)
                     } in
                     Printf.printf "MATCHED: %s\n" rule.identifier;
                     fn rule
@@ -424,11 +430,17 @@ let yara_scan_file rules filename fn =
                     let rule = {
                         identifier = getf rawrule yrrule_identifier;
                         (* TODO: How to check if NULL before? *)
-                        (*tags = getf rawrule yrrule_tags; *)
-                        tags = "";
+                        tags = getf rawrule yrrule_tags;
+                        (*
+                        metas = getf rawrule yrrule_metas;
+                        strings = getf rawrule yrrule_strings;
+                        ns = getf rawrule yrrule_ns;
+                        *)
+                        (* tags = ""; *)
                     } in
                     Printf.printf "MATCHED: %s\n" rule.identifier;
                     fn rule
+            (* Is this one really needed? *)
             | Some Callback_msg_rule_not_matching ->
                     (* msgdata is YR_RULE in this case *)
                     let rawrule = !@ (from_voidp yrrule msgdata) in
