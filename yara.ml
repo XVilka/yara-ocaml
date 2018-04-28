@@ -91,7 +91,7 @@ type yara_string = {
 let yrrule_gflags = field yrrule "g_flags" int32_t;;
 let yrrule_tflags = field yrrule "t_flags" (array 32 int32_t);;
 let yrrule_identifier = field yrrule "identifier" string;;
-let yrrule_tags = field yrrule "tags" string;;
+let yrrule_tags = field yrrule "tags" (ptr_opt char);;
 let yrrule_metas = field yrrule "metas" (ptr yrmeta);;
 let yrrule_strings = field yrrule "strings" (ptr yrstring);;
 let yrrule_ns = field yrrule "ns" (ptr yrnamespace);;
@@ -363,49 +363,47 @@ let yara_get_rules compiler =
     | Some Error_success -> Ok (!@ rules)
     | _ -> Or_error.error_string "Cannot get any rules!"
 
-(* Scan *)
-(* TODO: In what form we should accept Yara rules? *)
+(* Scan memory *)
 let yara_scan_mem rules buf fn =
+    (* We run "fn" as a callback *)
+    (* Scan callback *)
     let callback msg msgdata userdata =
         (* CALLBACK_MSG_RULE_MATCHING *)
         let rcvd = messages_of_enum msg in
         let _ = match rcvd with
-            | Some Callback_msg_rule_matching ->
-                    (* msgdata is YR_RULE in this case *)
-                    let rawrule = !@ (from_voidp yrrule msgdata) in
-                    (* TODO: Handle the result of the coercion *)
-                    let rule = {
-                        identifier = getf rawrule yrrule_identifier;
-                        (* TODO: How to check if NULL before? *)
-                        tags = getf rawrule yrrule_tags;
-                        (* Convert pointer to a list here *)
-                        (*
-                        metas = getf rawrule yrrule_metas;
-                        strings = getf rawrule yrrule_strings;
-                        ns = getf rawrule yrrule_ns;
-                        *)
-                        (* tags = ""; *)
-                    } in
-                    Printf.printf "MATCHED: %s\n" rule.identifier;
-                    fn rule
-            | Some Callback_msg_rule_not_matching ->
-                    (* msgdata is YR_RULE in this case *)
-                    let rawrule = !@ (from_voidp yrrule msgdata) in
-                    (* TODO: Handle the result of the coercion *)
-                    let rule = {
-                        identifier = getf rawrule yrrule_identifier;
-                        (* TODO: How to check if NULL before? *)
-                        (*tags = getf rawrule yrrule_tags;*)
-                        tags = "";
-                    } in
-                    Printf.printf "UNMATCHED: %s\n" rule.identifier;
+            | Some Callback_msg_rule_matching -> (
+                (* msgdata is YR_RULE in this case *)
+                let rawrule = !@ (from_voidp yrrule msgdata) in
+                let tags = match (getf rawrule yrrule_tags) with
+                    | None -> ""
+                    | Some tags_ptr -> coerce (ptr char) string tags_ptr
+                in
+                let rule = {
+                    identifier = getf rawrule yrrule_identifier;
+                    tags = tags;
+                    (* Convert pointer to a list here *)
+                    (*
+                    metas = getf rawrule yrrule_metas;
+                    strings = getf rawrule yrrule_strings;
+                    ns = getf rawrule yrrule_ns;
+                    *)
+                } in
+                Printf.printf "MATCHED: %s\n" rule.identifier;
+                fn rule)
+            | Some Callback_msg_rule_not_matching -> (
+                (* msgdata is YR_RULE in this case *)
+                let rawrule = !@ (from_voidp yrrule msgdata) in
+                let rule = {
+                    identifier = getf rawrule yrrule_identifier;
+                    tags = "";
+                } in
+                Printf.printf "UNMATCHED: %s\n" rule.identifier;)
             | _ -> ()
         in
         (* TODO: At some point in the future return something more
-         * meaningful than simply 0... maybe 42? *)
+        * meaningful than simply 0... maybe 42? *)
         0
     in
-    (* We run "fn" as a callback *)
     let buflen = Unsigned.Size_t.of_int (String.length buf) in
     (* TODO: Remove unnecessary copy *)
     let bufp = CArray.of_list char (String.to_list buf) in
@@ -416,46 +414,44 @@ let yara_scan_mem rules buf fn =
     | Some Error_success -> Ok ()
     | _ -> Or_error.error_string "Cannot perform the Yara scan"
 
-(* Scan *)
-(* TODO: In what form we should accept Yara rules? *)
+(* Scan file *)
 let yara_scan_file rules filename fn =
+    (* Scan callback *)
     let callback msg msgdata userdata =
         (* CALLBACK_MSG_RULE_MATCHING *)
         let rcvd = messages_of_enum msg in
         let _ = match rcvd with
-            | Some Callback_msg_rule_matching ->
-                    (* msgdata is YR_RULE in this case *)
-                    let rawrule = !@ (from_voidp yrrule msgdata) in
-                    (* TODO: Handle the result of the coercion *)
-                    let rule = {
-                        identifier = getf rawrule yrrule_identifier;
-                        (* TODO: How to check if NULL before? *)
-                        tags = getf rawrule yrrule_tags;
-                        (*
-                        metas = getf rawrule yrrule_metas;
-                        strings = getf rawrule yrrule_strings;
-                        ns = getf rawrule yrrule_ns;
-                        *)
-                        (* tags = ""; *)
-                    } in
-                    Printf.printf "MATCHED: %s\n" rule.identifier;
-                    fn rule
-            (* Is this one really needed? *)
-            | Some Callback_msg_rule_not_matching ->
-                    (* msgdata is YR_RULE in this case *)
-                    let rawrule = !@ (from_voidp yrrule msgdata) in
-                    (* TODO: Handle the result of the coercion *)
-                    let rule = {
-                        identifier = getf rawrule yrrule_identifier;
-                        (* TODO: How to check if NULL before? *)
-                        (* tags = getf rawrule yrrule_tags; *)
-                        tags = "";
-                    } in
-                    Printf.printf "UNMATCHED: %s\n" rule.identifier;
+            | Some Callback_msg_rule_matching -> (
+                (* msgdata is YR_RULE in this case *)
+                let rawrule = !@ (from_voidp yrrule msgdata) in
+                let tags = match (getf rawrule yrrule_tags) with
+                    | None -> ""
+                    | Some tags_ptr -> coerce (ptr char) string tags_ptr
+                in
+                let rule = {
+                    identifier = getf rawrule yrrule_identifier;
+                    tags = tags;
+                    (* Convert pointer to a list here *)
+                    (*
+                    metas = getf rawrule yrrule_metas;
+                    strings = getf rawrule yrrule_strings;
+                    ns = getf rawrule yrrule_ns;
+                    *)
+                } in
+                Printf.printf "MATCHED: %s\n" rule.identifier;
+                fn rule)
+            | Some Callback_msg_rule_not_matching -> (
+                (* msgdata is YR_RULE in this case *)
+                let rawrule = !@ (from_voidp yrrule msgdata) in
+                let rule = {
+                    identifier = getf rawrule yrrule_identifier;
+                    tags = "";
+                } in
+                Printf.printf "UNMATCHED: %s\n" rule.identifier;)
             | _ -> ()
         in
         (* TODO: At some point in the future return something more
-         * meaningful than simply 0... maybe 42? *)
+        * meaningful than simply 0... maybe 42? *)
         0
     in
     let result = yr_rules_scan_file rules filename 0 callback null 0 in
