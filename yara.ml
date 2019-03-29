@@ -2,8 +2,8 @@ open Core
 open Ctypes
 open PosixTypes
 open Foreign
-open Printf
 
+[@@@ocaml.warning "-32"]
 (* Yara types *)
 
 (* MAX_THREADS is 32 - see include/yara/limits.h *)
@@ -367,7 +367,7 @@ let yara_get_rules compiler =
 let yara_scan_mem rules buf fn =
     (* We run "fn" as a callback *)
     (* Scan callback *)
-    let callback msg msgdata userdata =
+    let callback msg msgdata _userdata =
         (* CALLBACK_MSG_RULE_MATCHING *)
         let rcvd = messages_of_enum msg in
         let _ = match rcvd with
@@ -417,7 +417,7 @@ let yara_scan_mem rules buf fn =
 (* Scan file *)
 let yara_scan_file rules filename fn =
     (* Scan callback *)
-    let callback msg msgdata userdata =
+    let callback msg msgdata _userdata =
         (* CALLBACK_MSG_RULE_MATCHING *)
         let rcvd = messages_of_enum msg in
         let _ = match rcvd with
