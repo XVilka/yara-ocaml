@@ -18,6 +18,7 @@ depends: [
 ]
 depexts: [
   ["libyara-dev"] {os-family = "debian"}
+  ["libyara-devel"] {os-distribution = "opensuse"}
   ["epel-release" "yara-devel"] {os-distribution = "centos"}
   ["yara-devel"] {os-distribution = "fedora"}
   ["yara"] {os-distribution = "alpine"}
