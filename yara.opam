@@ -6,10 +6,7 @@ homepage: "https://github.com/XVilka/yara-ocaml"
 bug-reports: "https://github.com/XVilka/yara-ocaml/issues"
 license: "MIT"
 dev-repo: "git+https://github.com/XVilka/yara-ocaml.git"
-build: [
-	["dune" "subst" "-p" name] {pinned}
-	["dune" "build" "-p" name "-j" jobs]
-]
+build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.02.3"}
   "dune"
